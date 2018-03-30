@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import glamorous from 'glamorous'
 import 'normalize.css'
+import diceAudio from './dice.mp3'
 import './App.css'
 
 const initialRolls = {
@@ -153,6 +154,11 @@ class App extends Component {
 }
 
 class CurrentRoll extends React.Component {
+  roll = () => {
+    this.audio.currentTime = 0
+    this.audio.play()
+    this.props.roll()
+  }
   render() {
     const { currentRoll, color, gameFinished, toggleShowRolls, showRolls } = this.props
     return (
@@ -200,7 +206,7 @@ class CurrentRoll extends React.Component {
           {currentRoll !== null && currentRoll}
         </glamorous.Div>
         <glamorous.Button
-          onClick={gameFinished ? this.props.reset : this.props.roll}
+          onClick={gameFinished ? this.props.reset : this.roll}
           css={{
             display: 'flex',
             background: 'rgba(0,0,0,.2)',
@@ -224,6 +230,10 @@ class CurrentRoll extends React.Component {
         >
           {gameFinished ? 'Reset' : 'Roll'}
         </glamorous.Button>
+        <audio
+          ref={ref=>{this.audio = ref}}
+          src={diceAudio}
+        />
       </glamorous.Div>
     )
   }
