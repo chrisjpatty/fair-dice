@@ -163,7 +163,10 @@ class CurrentRoll extends React.Component {
             alignItems: 'center',
             width: '100%',
             height: '100%',
-            fontSize: 300
+            fontSize: 300,
+            '@media only screen and (max-width: 500px)': {
+              fontSize: 150
+            }
           }}
         >
           {currentRoll !== null && currentRoll}
@@ -185,6 +188,9 @@ class CurrentRoll extends React.Component {
             },
             '&:active': {
               background: 'rgba(255,255,255,.1)'
+            },
+            '@media only screen and (max-width: 500px)': {
+              fontSize: 70
             }
           }}
         >
@@ -203,7 +209,10 @@ const PossibleRolls = ({ rolls, rollsOrder }) => (
       height: '100%',
       background: 'rgba(0,0,0,.1)',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      '@media only screen and (max-width: 500px)': {
+        width: 100
+      }
     }}
   >
     {rollsOrder.map(r => <Roll {...rolls[r]} key={r} />)}
