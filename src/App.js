@@ -76,7 +76,8 @@ class App extends Component {
   state = {
     rolls: { ...initialRolls },
     rollsOrder: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-    currentRoll: null
+    currentRoll: null,
+    showRolls: true
   }
   roll = () => {
     const random = this.getRandomRoll()
@@ -111,6 +112,11 @@ class App extends Component {
   reset = () => {
     this.setState({ rolls: { ...initialRolls }, currentRoll: null })
   }
+  toggleShowRolls = () => {
+    this.setState(state => ({
+      showRolls: !state.showRolls
+    }))
+  }
   render() {
     return (
       <glamorous.Div
@@ -121,10 +127,13 @@ class App extends Component {
           flexDirection: 'row'
         }}
       >
-        <PossibleRolls
-          rolls={this.state.rolls}
-          rollsOrder={this.state.rollsOrder}
-        />
+        {
+          this.state.showRolls &&
+          <PossibleRolls
+            rolls={this.state.rolls}
+            rollsOrder={this.state.rollsOrder}
+          />
+        }
         <CurrentRoll
           roll={this.roll}
           currentRoll={this.state.currentRoll}
@@ -135,6 +144,8 @@ class App extends Component {
           }
           gameFinished={this.getGameStatus()}
           reset={this.reset}
+          toggleShowRolls={this.toggleShowRolls}
+          showRolls={this.state.showRolls}
         />
       </glamorous.Div>
     )
@@ -143,7 +154,7 @@ class App extends Component {
 
 class CurrentRoll extends React.Component {
   render() {
-    const { currentRoll, color, gameFinished } = this.props
+    const { currentRoll, color, gameFinished, toggleShowRolls, showRolls } = this.props
     return (
       <glamorous.Div
         css={{
@@ -164,11 +175,28 @@ class CurrentRoll extends React.Component {
             width: '100%',
             height: '100%',
             fontSize: 300,
+            position: 'relative',
             '@media only screen and (max-width: 500px)': {
               fontSize: 150
             }
           }}
         >
+          <glamorous.Button onClick={toggleShowRolls} css={{
+            position: 'absolute',
+            left: 10,
+            top: 10,
+            fontSize: 16,
+            fontWeight: 400,
+            background: 'none',
+            border: 'none',
+            outline: 'none',
+            padding: '5px 10px',
+            '&:hover': {
+              background: 'rgba(0,0,0,.1)'
+            }
+          }}>
+            {showRolls ? 'Hide' : 'Show'} All Rolls
+          </glamorous.Button>
           {currentRoll !== null && currentRoll}
         </glamorous.Div>
         <glamorous.Button
