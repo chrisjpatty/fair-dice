@@ -73,12 +73,15 @@ const initialRolls = {
   }
 }
 
+const getRandomRoll = () => Math.floor(Math.random() * (12 - 1)) + 2
+
 class App extends Component {
   state = {
     rolls: { ...initialRolls },
     rollsOrder: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     currentRoll: null,
-    showRolls: true
+    showRolls: true,
+    history: []
   }
   roll = () => {
     const random = this.getRandomRoll()
@@ -91,18 +94,32 @@ class App extends Component {
             rolled: state.rolls[random].rolled + 1
           }
         },
-        currentRoll: random
+        currentRoll: random,
+        history: [state.currentRoll, ...state.history]
       }))
     } else {
       this.roll()
     }
+  }
+  undoRoll = () => {
+    this.setState(state => ({
+      rolls: {
+        ...state.rolls,
+        [state.currentRoll]: {
+          ...state.rolls[state.currentRoll],
+          rolled: state.rolls[state.currentRoll].rolled - 1
+        }
+      },
+      currentRoll: state.history[0],
+      history: state.history.slice(1)
+    }))
   }
   numberAllowed = n => {
     const roll = this.state.rolls[n]
     return roll.rolled < roll.probability
   }
   getRandomRoll = () => {
-    return Math.floor(Math.random() * (12 - 1)) + 2 //The maximum is inclusive and the minimum is inclusive
+    return getRandomRoll() //The maximum is inclusive and the minimum is inclusive
   }
   getGameStatus = () => {
     return this.state.rollsOrder.every(r => {
@@ -147,20 +164,51 @@ class App extends Component {
           reset={this.reset}
           toggleShowRolls={this.toggleShowRolls}
           showRolls={this.state.showRolls}
+          history={this.state.history}
+          undoRoll={this.undoRoll}
         />
       </glamorous.Div>
     )
   }
 }
 
+let animationTicker = 60;
+
 class CurrentRoll extends React.Component {
+  state = {rolling: false, rollingFrame: 2}
   roll = () => {
     this.audio.currentTime = 0
     this.audio.play()
+    this.startRollingAnimation()
+  }
+  startRollingAnimation = () => {
+    this.setState({
+      rolling: true
+    })
+    window.requestAnimationFrame(this.animateRoll)
+  }
+  animateRoll = () => {
+    if(animationTicker%5 === 0){
+      this.setState({
+        rollingFrame: getRandomRoll()
+      })
+    }
+    animationTicker -= 1;
+    if(animationTicker > 0){
+      window.requestAnimationFrame(this.animateRoll)
+    }else{
+      this.stopRollingAnimation()
+    }
+  }
+  stopRollingAnimation = () => {
+    animationTicker = 60;
+    this.setState({
+      rolling: false
+    })
     this.props.roll()
   }
   render() {
-    const { currentRoll, color, gameFinished, toggleShowRolls, showRolls } = this.props
+    const { currentRoll, color, gameFinished, toggleShowRolls, showRolls, undoRoll, history } = this.props
     return (
       <glamorous.Div
         css={{
@@ -182,6 +230,7 @@ class CurrentRoll extends React.Component {
             height: '100%',
             fontSize: 300,
             position: 'relative',
+            userSelect: 'none',
             '@media only screen and (max-width: 500px)': {
               fontSize: 150
             }
@@ -203,10 +252,29 @@ class CurrentRoll extends React.Component {
           }}>
             {showRolls ? 'Hide' : 'Show'} All Rolls
           </glamorous.Button>
-          {currentRoll !== null && currentRoll}
+          {
+            history.length > 0 &&
+            <glamorous.Button onClick={undoRoll} css={{
+              position: 'absolute',
+              right: 10,
+              top: 10,
+              fontSize: 16,
+              fontWeight: 400,
+              background: 'none',
+              border: 'none',
+              outline: 'none',
+              padding: '5px 10px',
+              '&:hover': {
+                background: 'rgba(0,0,0,.1)'
+              }
+            }}>
+              Undo Last Roll
+            </glamorous.Button>
+          }
+          {this.state.rolling ? this.state.rollingFrame : currentRoll !== null && currentRoll}
         </glamorous.Div>
         <glamorous.Button
-          onClick={gameFinished ? this.props.reset : this.roll}
+          onClick={gameFinished ? this.props.reset : this.state.rolling ? ()=>{} : this.roll}
           css={{
             display: 'flex',
             background: 'rgba(0,0,0,.2)',
@@ -217,18 +285,19 @@ class CurrentRoll extends React.Component {
             fontSize: 100,
             cursor: 'pointer',
             outline: 'none',
+            color: this.state.rolling ? 'rgba(0,0,0,.4)' : '',
             '&:hover': {
               background: 'rgba(0,0,0,.1)'
             },
-            '&:active': {
-              background: 'rgba(255,255,255,.1)'
-            },
+            // '&:active': {
+            //   background: 'rgba(255,255,255,.1)'
+            // },
             '@media only screen and (max-width: 500px)': {
               fontSize: 70
             }
           }}
         >
-          {gameFinished ? 'Reset' : 'Roll'}
+          {gameFinished ? 'Reset' : this.state.rolling ? 'Rolling' : 'Roll'}
         </glamorous.Button>
         <audio
           ref={ref=>{this.audio = ref}}
